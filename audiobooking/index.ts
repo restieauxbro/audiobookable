@@ -44,7 +44,9 @@ function groupParagraphs(paragraphs: string[]): string[] {
   return groupedTexts.filter((group) => group.length > 0);
 }
 
-const speechFile = path.resolve("./the-prophet-and-the-proletariat.mp3");
+const speechFile = path.resolve(
+  "./audiobooking/audio-outputs/the-prophet-and-the-proletariat.mp3"
+);
 
 // Function to get audio buffer for a sentence
 async function getAudioBuffer(paragraph: string) {
