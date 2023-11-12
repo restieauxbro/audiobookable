@@ -5,7 +5,6 @@ const openai = new OpenAI();
 import fs from "fs";
 import path from "path";
 //@ts-ignore
-import audioconcat from "audioconcat";
 import { harmonTextShort } from "./text-inputs/harmonTextShort";
 
 // Helper Function to Clean Text
@@ -27,7 +26,7 @@ function groupParagraphs(paragraphs: string[]): string[] {
   let currentGroup = "";
 
   paragraphs.forEach((paragraph) => {
-    if ((currentGroup + paragraph).length <= 4000) {
+    if ((currentGroup + paragraph).length <= 1000) {
       currentGroup += paragraph + "\n";
     } else {
       groupedTexts.push(currentGroup);
@@ -39,81 +38,49 @@ function groupParagraphs(paragraphs: string[]): string[] {
     groupedTexts.push(currentGroup);
   }
 
-  return groupedTexts
+  groupedTexts = groupedTexts.filter((group) => group.length > 0);
+  return groupedTexts;
 }
 
-// OpenAI TTS Function
-async function openAITTS(text: string, fileName: string): Promise<string> {
-  console.log(text)
-  const mp3 = await openai.audio.speech.create({
-    model: "tts-1",
-    voice: "onyx",
-    input: text,
-  });
-  const buffer = Buffer.from(await mp3.arrayBuffer());
-  const speechFile = path.resolve(
-    `./audiobooking/audio-outputs/${fileName}.mp3`
+const speechFile = path.resolve("./speech.mp3");
+
+// Function to get audio buffer for a sentence
+async function getAudioBuffer(paragraph: string) {
+  console.log(
+    "\n\ngetting audio for paragraph: ",
+    paragraph.slice(0, 100) + "..."
   );
-  await fs.promises.writeFile(speechFile, buffer);
-  return speechFile;
-}
-
-// Create Audio Transcription
-async function createAudioTranscription(
-  textGroups: string[],
-  baseFileName: string
-): Promise<string[]> {
-  let fileNames: string[] = [];
-
-  for (let i = 0; i < textGroups.length; i++) {
-    const fileName = `${baseFileName}_${i}`;
-    const filePath = await openAITTS(textGroups[i], fileName);
-    fileNames.push(filePath);
+  try {
+    const mp3 = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "onyx",
+      input: paragraph,
+    });
+    return Buffer.from(await mp3.arrayBuffer());
+  } catch (error) {
+    throw error;
   }
-
-  return fileNames;
 }
 
-// Combine Audio Files using audioconcat
-function combineAudioFiles(
-  fileNames: string[],
-  outputFileName: string
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    audioconcat(fileNames)
-      .concat(outputFileName)
-      .on("start", (command: string) => {
-        console.log("ffmpeg process started:", command);
-      })
-      .on("error", (err: Error, stdout: string, stderr: string) => {
-        console.error("Error:", err);
-        console.error("ffmpeg stderr:", stderr);
-        reject(err);
-      })
-      .on("end", () => {
-        console.log("Audio concatenation finished");
-        resolve();
-      });
-  });
-}
-
-// Example Usage
-(async () => {
-  // console.log("\n\ntext length in characters: ", harmonTextShort.length);
+// Main function to process multiple sentences
+async function main() {
   const paragraphs = splitTextIntoParagraphs(harmonTextShort);
-  const groupedTexts = groupParagraphs(paragraphs)
-  console.log("groupedTexts ", groupedTexts[3]);
+  const groupedTexts = groupParagraphs(paragraphs);
+  console.log("groupedTexts length", groupedTexts.length);
+  // consisting of how mnay characters in each
+  console.log(
+    "groupedTexts",
+    groupedTexts.map((group) => group.length)
+  );
 
-  // const audioFiles = await createAudioTranscription(
-  //   groupedTexts,
-  //   "myAudioBook"
-  // );
-  // await combineAudioFiles(
-  //   [
-  //     "./audiobooking/audio-outputs/myAudioBook_0.mp3",
-  //     "./audiobooking/audio-outputs/myAudioBook_1.mp3",
-  //   ],
-  //   "./audiobooking/audio-outputs/myAudioBook_combined.mp3"
-  // );
-  console.log("Audio book created successfully!");
-})();
+  // Use Promise.all with .map to handle all sentences simultaneously
+ // const audioBuffers = await Promise.all(groupedTexts.map(getAudioBuffer));
+
+  // Concatenate all audio buffers
+  //const combinedBuffer = Buffer.concat(audioBuffers);
+
+  // Write the concatenated buffer to an MP3 file
+//  await fs.promises.writeFile(speechFile, combinedBuffer);
+}
+
+main();
