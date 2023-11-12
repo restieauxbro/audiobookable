@@ -17,32 +17,34 @@ function cleanText(text: string): string {
 function splitTextIntoParagraphs(text: string): string[] {
   const cleanedText = cleanText(text);
   // split by two new lines
-  return cleanedText.split("\n\n");
+  return cleanedText.split("\n");
 }
 
-// Group Paragraphs into Chunks
 function groupParagraphs(paragraphs: string[]): string[] {
   let groupedTexts: string[] = [];
   let currentGroup = "";
 
   paragraphs.forEach((paragraph) => {
-    if ((currentGroup + paragraph).length <= 1000) {
+    // Check the length before appending
+    if ((currentGroup + paragraph).length <= 4000) {
       currentGroup += paragraph + "\n";
     } else {
-      groupedTexts.push(currentGroup);
-      currentGroup = paragraph + "\n";
+      if (currentGroup.length > 0) {
+        groupedTexts.push(currentGroup); // Push the current group if it's not empty
+      }
+      currentGroup = paragraph + "\n"; // Start a new group with the current paragraph
     }
   });
 
+  // Add the last group if it's not empty
   if (currentGroup.length > 0) {
     groupedTexts.push(currentGroup);
   }
 
-  groupedTexts = groupedTexts.filter((group) => group.length > 0);
-  return groupedTexts;
+  return groupedTexts.filter((group) => group.length > 0);
 }
 
-const speechFile = path.resolve("./speech.mp3");
+const speechFile = path.resolve("./the-prophet-and-the-proletariat.mp3");
 
 // Function to get audio buffer for a sentence
 async function getAudioBuffer(paragraph: string) {
@@ -52,7 +54,7 @@ async function getAudioBuffer(paragraph: string) {
   );
   try {
     const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
+      model: "tts-1-hd",
       voice: "onyx",
       input: paragraph,
     });
@@ -65,6 +67,7 @@ async function getAudioBuffer(paragraph: string) {
 // Main function to process multiple sentences
 async function main() {
   const paragraphs = splitTextIntoParagraphs(harmonTextShort);
+  console.log("paragraphs length", paragraphs.length);
   const groupedTexts = groupParagraphs(paragraphs);
   console.log("groupedTexts length", groupedTexts.length);
   // consisting of how mnay characters in each
@@ -73,14 +76,17 @@ async function main() {
     groupedTexts.map((group) => group.length)
   );
 
-  // Use Promise.all with .map to handle all sentences simultaneously
- // const audioBuffers = await Promise.all(groupedTexts.map(getAudioBuffer));
+  let audioBuffers = [];
+  for (const group of groupedTexts) {
+    const buffer = await getAudioBuffer(group);
+    audioBuffers.push(buffer);
+  }
 
   // Concatenate all audio buffers
-  //const combinedBuffer = Buffer.concat(audioBuffers);
+  const combinedBuffer = Buffer.concat(audioBuffers);
 
   // Write the concatenated buffer to an MP3 file
-//  await fs.promises.writeFile(speechFile, combinedBuffer);
+  await fs.promises.writeFile(speechFile, combinedBuffer);
 }
 
 main();
