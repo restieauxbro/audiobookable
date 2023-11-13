@@ -436,9 +436,7 @@ the left.  In Afghanistan, Roy notes:
  
 The Islamist movement was born in the modern sectors of society and developed 
 from a critique of the popular movements that preceded it ... The Islamists are 
-intellectuals, the products of modernist enclaves within traditional society; their 
- 
-social origins are what we have termed the state bourgeoisie – products of the 
+intellectuals, the products of modernist enclaves within traditional society; their social origins are what we have termed the state bourgeoisie – products of the 
 government education system which only leads to employment in the state 
 machine ... The Islamists are products of the state educational system. Very few 
 of them have an education in the arts. On the campus they mostly mix with the 
@@ -716,9 +714,7 @@ against imperialism to a purely ideological struggle against what they see as it
 cultural effects. “Cultural imperialism”, rather than material exploitation, is 
 identified as the source of everything that is wrong. The fight is then not directed 
 against forces really involved in impoverishing people, but rather against those 
-who speak “foreign” languages, accept “alien” religions or reject allegedly 
-
-“traditional” lifestyles. This is very convenient for certain sections of local 
+who speak “foreign” languages, accept “alien” religions or reject allegedly “traditional” lifestyles. This is very convenient for certain sections of local 
 capital who find it easy to practice the “indigenous culture”, at least in public. It 
 is also of direct material interest to sections of the middle class who can advance 
 their own careers by purging others from their jobs.  
@@ -756,9 +752,7 @@ attracted by what was seen as the left – by the example of the Vietnamese War
 against America or by the so called cultural revolution in China – and began to 
 reject traditional religious thinking over, for instance, the women’s question. This 
 happened with the Catholic liberation theologists in Latin America and the 
-People’s Mojahedin in Iran. And even in Afghanistan the Islamist students 
- 
-demonstrated against Zionism during the six-day war, against American policies 
+People’s Mojahedin in Iran. And even in Afghanistan the Islamist students demonstrated against Zionism during the six-day war, against American policies 
 in Vietnam and the privileges of the establishment. They were violently opposed 
 to important figures on the traditionalist side, to the King and especially his 
 cousin Daoud ... They protested against foreign influences in Afghanistan, both 

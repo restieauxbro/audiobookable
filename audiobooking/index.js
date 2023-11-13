@@ -15,15 +15,34 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const openai_1 = __importDefault(require("openai"));
 require("dotenv").config();
 const openai = new openai_1.default();
+const { convert } = require("html-to-text");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-//@ts-ignore
-const audioconcat_1 = __importDefault(require("audioconcat"));
-const harmonTextShort_1 = require("./text-inputs/harmonTextShort");
+// get the html file audiobooking/text-inputs/from-marx-to-lenin.html
+// and convert it to text
+const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/from-marx-to-lenin.html");
+const html = fs_1.default.readFileSync(htmlFile, "utf-8");
+const conversionOptions = {
+    uppercase: false,
+    ignoreHref: true,
+    wordwrap: false,
+    selectors: [
+        // {selector: "h2", format: "lowercase"},
+        { selector: "sup", format: "skip" },
+        { selector: ".code-block", format: "skip" },
+        { selector: ".mdp-speaker-wrapper", format: "skip" },
+    ],
+};
+const text = convert(html, conversionOptions);
+console.log(cleanText(text));
 // Helper Function to Clean Text
 function cleanText(text) {
-    // Implement your text cleaning logic here
-    return text;
+    // remove artifacts like [1], [2], [https://example.com] and so on
+    const cleanedText = text
+        .replace("https://marxistleftreview.org/subscribe/", "hi there")
+        .replace(/\[.*?\]/g, "");
+    // remove double spaces
+    return cleanedText;
 }
 // Split Text into Paragraphs
 function splitTextIntoParagraphs(text) {
@@ -31,82 +50,65 @@ function splitTextIntoParagraphs(text) {
     // split by two new lines
     return cleanedText.split("\n\n");
 }
-// Group Paragraphs into Chunks
 function groupParagraphs(paragraphs) {
     let groupedTexts = [];
     let currentGroup = "";
     paragraphs.forEach((paragraph) => {
+        // Check the length before appending
         if ((currentGroup + paragraph).length <= 4000) {
             currentGroup += paragraph + "\n";
         }
         else {
-            groupedTexts.push(currentGroup);
-            currentGroup = paragraph + "\n";
+            if (currentGroup.length > 0) {
+                groupedTexts.push(currentGroup); // Push the current group if it's not empty
+            }
+            currentGroup = paragraph + "\n"; // Start a new group with the current paragraph
         }
     });
+    // Add the last group if it's not empty
     if (currentGroup.length > 0) {
         groupedTexts.push(currentGroup);
     }
-    return groupedTexts;
+    return groupedTexts.filter((group) => group.length > 0);
 }
-// OpenAI TTS Function
-function openAITTS(text, fileName) {
+const speechFile = path_1.default.resolve("./audiobooking/audio-outputs/from-lenin-to-marx-debates.mp3");
+// Function to get audio buffer for a sentence
+function getAudioBuffer(paragraph) {
     return __awaiter(this, void 0, void 0, function* () {
-        const mp3 = yield openai.audio.speech.create({
-            model: "tts-1",
-            voice: "onyx",
-            input: text,
-        });
-        const buffer = Buffer.from(yield mp3.arrayBuffer());
-        const speechFile = path_1.default.resolve(`./audiobooking/audio-outputs/${fileName}.mp3`);
-        yield fs_1.default.promises.writeFile(speechFile, buffer);
-        return speechFile;
-    });
-}
-// Create Audio Transcription
-function createAudioTranscription(textGroups, baseFileName) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let fileNames = [];
-        for (let i = 0; i < textGroups.length; i++) {
-            const fileName = `${baseFileName}_${i + 2}`;
-            const filePath = yield openAITTS(textGroups[i], fileName);
-            fileNames.push(filePath);
+        console.log("\n\ngetting audio for paragraph: ", paragraph.slice(0, 100) + "...");
+        try {
+            const mp3 = yield openai.audio.speech.create({
+                model: "tts-1-hd",
+                voice: "fable",
+                input: paragraph,
+            });
+            return Buffer.from(yield mp3.arrayBuffer());
         }
-        return fileNames;
+        catch (error) {
+            throw error;
+        }
     });
 }
-// Combine Audio Files using audioconcat
-function combineAudioFiles(fileNames, outputFileName) {
-    return new Promise((resolve, reject) => {
-        (0, audioconcat_1.default)(fileNames)
-            .concat(outputFileName)
-            .on("start", (command) => {
-            console.log("ffmpeg process started:", command);
-        })
-            .on("error", (err, stdout, stderr) => {
-            console.error("Error:", err);
-            console.error("ffmpeg stderr:", stderr);
-            reject(err);
-        })
-            .on("end", () => {
-            console.log("Audio concatenation finished");
-            resolve();
-        });
+// Main function to process multiple sentences
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const paragraphs = splitTextIntoParagraphs(text);
+        console.log("paragraphs length", paragraphs.length);
+        const groupedParagraphs = groupParagraphs(paragraphs);
+        console.log("groupedParagraphs length", groupedParagraphs.length);
+        // consisting of how many characters in each
+        console.log("groupedParagraphs", groupedParagraphs.map((group) => group.length));
+        let audioBuffers = [];
+        const batchSize = 1;
+        for (let i = 0; i < groupedParagraphs.length; i += batchSize) {
+            const batch = groupedParagraphs.slice(i, i + batchSize);
+            const buffers = yield Promise.all(batch.map(getAudioBuffer));
+            audioBuffers.push(...buffers);
+        }
+        // Concatenate all audio buffers
+        const combinedBuffer = Buffer.concat(audioBuffers);
+        // Write the concatenated buffer to an MP3 file
+        yield fs_1.default.promises.writeFile(speechFile, combinedBuffer);
     });
 }
-// Example Usage
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log("\n\ntext length in characters: ", harmonTextShort.length);
-    const paragraphs = splitTextIntoParagraphs(harmonTextShort_1.harmonTextShort);
-    const groupedTexts = groupParagraphs(paragraphs);
-    console.log("groupedTexts length: ", groupedTexts[0]);
-    const audioFiles = yield createAudioTranscription(groupedTexts.slice(0, 2), "myAudioBook");
-    // await combineAudioFiles(
-    //   [
-    //     "./audiobooking/audio-outputs/myAudioBook_0.mp3",
-    //     "./audiobooking/audio-outputs/myAudioBook_1.mp3",
-    //   ],
-    //   "./audiobooking/audio-outputs/myAudioBook_combined.mp3"
-    // );
-    console.log("Audio book created successfully!");
-}))();
+main();
