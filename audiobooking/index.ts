@@ -82,9 +82,13 @@ async function getAudioBuffer(paragraph: string) {
 // Main function to process multiple sentences
 async function main(
   outputFileName: string,
-  batchSize?: number,
-  delay?: number
+  text: string,
+  options: {
+    batchSize?: number;
+    delay?: number;
+  }
 ) {
+  const {batchSize, delay} = options;
   const paragraphs = splitTextIntoParagraphs(text);
   console.log("paragraphs length", paragraphs.length);
   const groupedParagraphs = groupParagraphs(paragraphs);
@@ -125,7 +129,8 @@ const htmlFile = path.resolve(
   "./audiobooking/text-inputs/Israel, the US, and imperialism.html"
 );
 const html = fs.readFileSync(htmlFile, "utf-8");
-const text = convert(html, conversionOptions);
-console.log(cleanText(text));
+let text = convert(html, conversionOptions);
+text = cleanText(text);
+console.log(text);
 
-main("Israel the US and imperialism-HD", 20, 60000);
+main("Israel the US and imperialism-HD", text, { batchSize: 3, delay: 60000 });
