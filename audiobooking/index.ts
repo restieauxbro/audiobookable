@@ -5,12 +5,6 @@ const { convert } = require("html-to-text");
 import fs from "fs";
 import path from "path";
 
-// get the html file audiobooking/text-inputs/from-marx-to-lenin.html
-// and convert it to text
-const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/from-marx-to-lenin.html"
-);
-const html = fs.readFileSync(htmlFile, "utf-8");
 const conversionOptions = {
   uppercase: false,
   ignoreHref: true,
@@ -20,17 +14,15 @@ const conversionOptions = {
     { selector: "sup", format: "skip" },
     { selector: ".code-block", format: "skip" },
     { selector: ".mdp-speaker-wrapper", format: "skip" },
+    { selector: ".references", format: "skip" },
+    { selector: ".floating-ref-link", format: "skip" },
   ],
 };
-const text = convert(html, conversionOptions);
-console.log(cleanText(text));
 
 // Helper Function to Clean Text
 function cleanText(text: string): string {
   // remove artifacts like [1], [2], [https://example.com] and so on
-  const cleanedText = text
-    .replace("https://marxistleftreview.org/subscribe/", "hi there")
-    .replace(/\[.*?\]/g, "");
+  const cleanedText = text.replace(/\[.*?\]/g, "");
   // remove double spaces
   return cleanedText;
 }
@@ -49,7 +41,7 @@ function groupParagraphs(paragraphs: string[]): string[] {
   paragraphs.forEach((paragraph) => {
     // Check the length before appending
     if ((currentGroup + paragraph).length <= 4000) {
-      currentGroup += paragraph + "\n";
+      currentGroup += paragraph + "\n\n";
     } else {
       if (currentGroup.length > 0) {
         groupedTexts.push(currentGroup); // Push the current group if it's not empty
@@ -66,9 +58,8 @@ function groupParagraphs(paragraphs: string[]): string[] {
   return groupedTexts.filter((group) => group.length > 0);
 }
 
-const speechFile = path.resolve(
-  "./audiobooking/audio-outputs/from-lenin-to-marx-debates.mp3"
-);
+const speechFile = (outputFileName: string) =>
+  path.resolve(`./audiobooking/audio-outputs/${outputFileName}.mp3`);
 
 // Function to get audio buffer for a sentence
 async function getAudioBuffer(paragraph: string) {
@@ -78,8 +69,8 @@ async function getAudioBuffer(paragraph: string) {
   );
   try {
     const mp3 = await openai.audio.speech.create({
-      model: "tts-1-hd",
-      voice: "fable",
+      model: "tts-1",
+      voice: "onyx",
       input: paragraph,
     });
     return Buffer.from(await mp3.arrayBuffer());
@@ -89,7 +80,11 @@ async function getAudioBuffer(paragraph: string) {
 }
 
 // Main function to process multiple sentences
-async function main() {
+async function main(
+  outputFileName: string,
+  batchSize?: number,
+  delay?: number
+) {
   const paragraphs = splitTextIntoParagraphs(text);
   console.log("paragraphs length", paragraphs.length);
   const groupedParagraphs = groupParagraphs(paragraphs);
@@ -100,18 +95,37 @@ async function main() {
     groupedParagraphs.map((group) => group.length)
   );
 
-  let audioBuffers = [];
-  const batchSize = 1;
-  for (let i = 0; i < groupedParagraphs.length; i += batchSize) {
-    const batch = groupedParagraphs.slice(i, i + batchSize);
+  // Send requests in batches of 3 every minute to avoid rate limit
+  let audioBuffers: Buffer[] = [];
+  const batchMax = batchSize || 3;
+  const batchDelay = delay || 0;
+
+  for (let i = 0; i < groupedParagraphs.length; i += batchMax) {
+    const batch = groupedParagraphs.slice(i, i + batchMax);
     const buffers = await Promise.all(batch.map(getAudioBuffer));
     audioBuffers.push(...buffers);
+    if (i + batchMax < groupedParagraphs.length) {
+      // waiting until the previous batch is done before starting the next one
+      // to ensure that the audio buffers are in the correct order
+      console.log(
+        `waiting ${batchDelay / 1000} seconds before sending next batch`
+      );
+      await new Promise((resolve) => setTimeout(resolve, batchDelay));
+    }
   }
 
   // Concatenate all audio buffers
   const combinedBuffer = Buffer.concat(audioBuffers);
 
   // Write the concatenated buffer to an MP3 file
-  await fs.promises.writeFile(speechFile, combinedBuffer);
+  await fs.promises.writeFile(speechFile(outputFileName), combinedBuffer);
 }
-main();
+
+const htmlFile = path.resolve(
+  "./audiobooking/text-inputs/Israel, the US, and imperialism.html"
+);
+const html = fs.readFileSync(htmlFile, "utf-8");
+const text = convert(html, conversionOptions);
+console.log(cleanText(text));
+
+main("Israel the US and imperialism-HD", 20, 60000);

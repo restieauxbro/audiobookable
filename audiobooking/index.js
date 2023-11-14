@@ -18,9 +18,7 @@ const openai = new openai_1.default();
 const { convert } = require("html-to-text");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-// get the html file audiobooking/text-inputs/from-marx-to-lenin.html
-// and convert it to text
-const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/from-marx-to-lenin.html");
+const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/review-joseph-daher-hezbollah-the-political-economy-of-lebanons-party-of-god.html");
 const html = fs_1.default.readFileSync(htmlFile, "utf-8");
 const conversionOptions = {
     uppercase: false,
@@ -31,6 +29,8 @@ const conversionOptions = {
         { selector: "sup", format: "skip" },
         { selector: ".code-block", format: "skip" },
         { selector: ".mdp-speaker-wrapper", format: "skip" },
+        { selector: ".references", format: "skip" },
+        { selector: ".floating-ref-link", format: "skip" },
     ],
 };
 const text = convert(html, conversionOptions);
@@ -38,9 +38,7 @@ console.log(cleanText(text));
 // Helper Function to Clean Text
 function cleanText(text) {
     // remove artifacts like [1], [2], [https://example.com] and so on
-    const cleanedText = text
-        .replace("https://marxistleftreview.org/subscribe/", "hi there")
-        .replace(/\[.*?\]/g, "");
+    const cleanedText = text.replace(/\[.*?\]/g, "");
     // remove double spaces
     return cleanedText;
 }
@@ -56,7 +54,7 @@ function groupParagraphs(paragraphs) {
     paragraphs.forEach((paragraph) => {
         // Check the length before appending
         if ((currentGroup + paragraph).length <= 4000) {
-            currentGroup += paragraph + "\n";
+            currentGroup += paragraph + "\n\n";
         }
         else {
             if (currentGroup.length > 0) {
@@ -71,15 +69,15 @@ function groupParagraphs(paragraphs) {
     }
     return groupedTexts.filter((group) => group.length > 0);
 }
-const speechFile = path_1.default.resolve("./audiobooking/audio-outputs/from-lenin-to-marx-debates.mp3");
+const speechFile = path_1.default.resolve("./audiobooking/audio-outputs/review-joseph-daher-hezbollah-the-political-economy-of-lebanons-party-of-god.mp3");
 // Function to get audio buffer for a sentence
 function getAudioBuffer(paragraph) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("\n\ngetting audio for paragraph: ", paragraph.slice(0, 100) + "...");
         try {
             const mp3 = yield openai.audio.speech.create({
-                model: "tts-1-hd",
-                voice: "fable",
+                model: "tts-1-1106",
+                voice: "onyx",
                 input: paragraph,
             });
             return Buffer.from(yield mp3.arrayBuffer());
@@ -99,7 +97,7 @@ function main() {
         // consisting of how many characters in each
         console.log("groupedParagraphs", groupedParagraphs.map((group) => group.length));
         let audioBuffers = [];
-        const batchSize = 1;
+        const batchSize = 10;
         for (let i = 0; i < groupedParagraphs.length; i += batchSize) {
             const batch = groupedParagraphs.slice(i, i + batchSize);
             const buffers = yield Promise.all(batch.map(getAudioBuffer));
