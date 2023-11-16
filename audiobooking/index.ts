@@ -5,6 +5,8 @@ const { convert } = require("html-to-text");
 import fs from "fs";
 import path from "path";
 
+type Voice = "onyx" | "alloy" | "echo" | "fable" | "nova" | "shimmer";
+
 const conversionOptions = {
   uppercase: false,
   ignoreHref: true,
@@ -62,7 +64,7 @@ const speechFile = (outputFileName: string) =>
   path.resolve(`./audiobooking/audio-outputs/${outputFileName}.mp3`);
 
 // Function to get audio buffer for a sentence
-async function getAudioBuffer(paragraph: string) {
+async function getAudioBuffer(paragraph: string, voice?: Voice) {
   console.log(
     "\n\ngetting audio for paragraph: ",
     paragraph.slice(0, 100) + "..."
@@ -70,7 +72,7 @@ async function getAudioBuffer(paragraph: string) {
   try {
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "onyx",
+      voice: voice || "onyx",
       input: paragraph,
     });
     return Buffer.from(await mp3.arrayBuffer());
@@ -86,9 +88,10 @@ async function main(
   options: {
     batchSize?: number;
     delay?: number;
+    voice?: Voice;
   }
 ) {
-  const {batchSize, delay} = options;
+  const { batchSize, delay, voice } = options;
   const paragraphs = splitTextIntoParagraphs(text);
   console.log("paragraphs length", paragraphs.length);
   const groupedParagraphs = groupParagraphs(paragraphs);
@@ -106,7 +109,9 @@ async function main(
 
   for (let i = 0; i < groupedParagraphs.length; i += batchMax) {
     const batch = groupedParagraphs.slice(i, i + batchMax);
-    const buffers = await Promise.all(batch.map(getAudioBuffer));
+    const buffers = await Promise.all(
+      batch.map((str) => getAudioBuffer(str, voice))
+    );
     audioBuffers.push(...buffers);
     if (i + batchMax < groupedParagraphs.length) {
       // waiting until the previous batch is done before starting the next one
@@ -126,11 +131,18 @@ async function main(
 }
 
 const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/Israel, the US, and imperialism.html"
+  "./audiobooking/text-inputs/us-imperialism-and-the-war-for-the-middle-east.html"
 );
 const html = fs.readFileSync(htmlFile, "utf-8");
 let text = convert(html, conversionOptions);
 text = cleanText(text);
 console.log(text);
 
-main("Israel the US and imperialism-HD", text, { batchSize: 3, delay: 60000 });
+
+// Usage _________________________________________________________________
+
+main("us-imperialism-and-the-war-for-the-middle-east", text, {
+  batchSize: 50,
+  delay: 60000,
+  voice: "echo",
+});
