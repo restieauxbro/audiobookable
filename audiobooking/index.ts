@@ -5,7 +5,13 @@ const { convert } = require("html-to-text");
 import fs from "fs";
 import path from "path";
 
-type Voice = "onyx" | "alloy" | "echo" | "fable" | "nova" | "shimmer";
+type Voice =
+  | "onyx" // men's voices
+  | "echo"
+  | "fable"
+  | "alloy" // women's voices
+  | "nova"
+  | "shimmer";
 
 const conversionOptions = {
   uppercase: false,
@@ -18,14 +24,18 @@ const conversionOptions = {
     { selector: ".mdp-speaker-wrapper", format: "skip" },
     { selector: ".references", format: "skip" },
     { selector: ".floating-ref-link", format: "skip" },
+    { selector: "table", format: "skip" },
+    { selector: ".note", format: "skip" },
+    { selector: "hr", format: "skip" },
   ],
 };
 
 // Helper Function to Clean Text
 function cleanText(text: string): string {
   // remove artifacts like [1], [2], [https://example.com] and so on
-  const cleanedText = text.replace(/\[.*?\]/g, "");
-  // remove double spaces
+  let cleanedText = text.replace(/\[.*?\]/g, "");
+  // remove everything after the last occurrence of "REFERENCES"
+  cleanedText = cleanedText.replace(/REFERENCES.*$/s, "");
   return cleanedText;
 }
 
@@ -82,7 +92,7 @@ async function getAudioBuffer(paragraph: string, voice?: Voice) {
 }
 
 // Main function to process multiple sentences
-async function main(
+export async function longTextToAudio(
   outputFileName: string,
   text: string,
   options: {
@@ -131,18 +141,21 @@ async function main(
 }
 
 const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/us-imperialism-and-the-war-for-the-middle-east.html"
+  "./audiobooking/text-inputs/the-roots-of-sexual-violence.html"
 );
 const html = fs.readFileSync(htmlFile, "utf-8");
 let text = convert(html, conversionOptions);
 text = cleanText(text);
 console.log(text);
 
-
 // Usage _________________________________________________________________
 
-main("us-imperialism-and-the-war-for-the-middle-east", text, {
-  batchSize: 50,
-  delay: 60000,
-  voice: "echo",
-});
+longTextToAudio(
+  "the-roots-of-sexual-violence",
+  text,
+  {
+    batchSize: 50,
+    delay: 60000,
+    voice: "shimmer",
+  }
+);
