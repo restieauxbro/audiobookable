@@ -21,6 +21,9 @@ const conversionOptions = {
     // {selector: "h2", format: "lowercase"},
     { selector: "sup", format: "skip" },
     { selector: ".code-block", format: "skip" },
+    { selector: ".topics", format: "skip" },
+    { selector: "audio", format: "skip" },
+    { selector: ".author", format: "skip" },
     { selector: ".mdp-speaker-wrapper", format: "skip" },
     { selector: ".references", format: "skip" },
     { selector: ".floating-ref-link", format: "skip" },
@@ -141,7 +144,7 @@ export async function longTextToAudio(
 }
 
 const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/the-roots-of-sexual-violence.html"
+  "./audiobooking/text-inputs/solidarity-with-palestine-grows.html"
 );
 const html = fs.readFileSync(htmlFile, "utf-8");
 let text = convert(html, conversionOptions);
@@ -150,12 +153,12 @@ console.log(text);
 
 // Usage _________________________________________________________________
 
-longTextToAudio(
-  "the-roots-of-sexual-violence",
-  text,
-  {
-    batchSize: 50,
-    delay: 60000,
-    voice: "shimmer",
-  }
-);
+// longTextToAudio(
+//   "solidarity-with-palestine-grows",
+//   text,
+//   {
+//     batchSize: 50,
+//     delay: 60000,
+//     voice: "onyx",
+//   }
+// );

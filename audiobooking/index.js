@@ -12,14 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.longTextToAudio = void 0;
 const openai_1 = __importDefault(require("openai"));
 require("dotenv").config();
 const openai = new openai_1.default();
 const { convert } = require("html-to-text");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/review-joseph-daher-hezbollah-the-political-economy-of-lebanons-party-of-god.html");
-const html = fs_1.default.readFileSync(htmlFile, "utf-8");
 const conversionOptions = {
     uppercase: false,
     ignoreHref: true,
@@ -28,18 +27,23 @@ const conversionOptions = {
         // {selector: "h2", format: "lowercase"},
         { selector: "sup", format: "skip" },
         { selector: ".code-block", format: "skip" },
+        { selector: ".topics", format: "skip" },
+        { selector: "audio", format: "skip" },
+        { selector: ".author", format: "skip" },
         { selector: ".mdp-speaker-wrapper", format: "skip" },
         { selector: ".references", format: "skip" },
         { selector: ".floating-ref-link", format: "skip" },
+        { selector: "table", format: "skip" },
+        { selector: ".note", format: "skip" },
+        { selector: "hr", format: "skip" },
     ],
 };
-const text = convert(html, conversionOptions);
-console.log(cleanText(text));
 // Helper Function to Clean Text
 function cleanText(text) {
     // remove artifacts like [1], [2], [https://example.com] and so on
-    const cleanedText = text.replace(/\[.*?\]/g, "");
-    // remove double spaces
+    let cleanedText = text.replace(/\[.*?\]/g, "");
+    // remove everything after the last occurrence of "REFERENCES"
+    cleanedText = cleanedText.replace(/REFERENCES.*$/s, "");
     return cleanedText;
 }
 // Split Text into Paragraphs
@@ -69,15 +73,15 @@ function groupParagraphs(paragraphs) {
     }
     return groupedTexts.filter((group) => group.length > 0);
 }
-const speechFile = path_1.default.resolve("./audiobooking/audio-outputs/review-joseph-daher-hezbollah-the-political-economy-of-lebanons-party-of-god.mp3");
+const speechFile = (outputFileName) => path_1.default.resolve(`./audiobooking/audio-outputs/${outputFileName}.mp3`);
 // Function to get audio buffer for a sentence
-function getAudioBuffer(paragraph) {
+function getAudioBuffer(paragraph, voice) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("\n\ngetting audio for paragraph: ", paragraph.slice(0, 100) + "...");
         try {
             const mp3 = yield openai.audio.speech.create({
-                model: "tts-1-1106",
-                voice: "onyx",
+                model: "tts-1",
+                voice: voice || "onyx",
                 input: paragraph,
             });
             return Buffer.from(yield mp3.arrayBuffer());
@@ -88,25 +92,49 @@ function getAudioBuffer(paragraph) {
     });
 }
 // Main function to process multiple sentences
-function main() {
+function longTextToAudio(outputFileName, text, options) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { batchSize, delay, voice } = options;
         const paragraphs = splitTextIntoParagraphs(text);
         console.log("paragraphs length", paragraphs.length);
         const groupedParagraphs = groupParagraphs(paragraphs);
         console.log("groupedParagraphs length", groupedParagraphs.length);
         // consisting of how many characters in each
         console.log("groupedParagraphs", groupedParagraphs.map((group) => group.length));
+        // Send requests in batches of 3 every minute to avoid rate limit
         let audioBuffers = [];
-        const batchSize = 10;
-        for (let i = 0; i < groupedParagraphs.length; i += batchSize) {
-            const batch = groupedParagraphs.slice(i, i + batchSize);
-            const buffers = yield Promise.all(batch.map(getAudioBuffer));
+        const batchMax = batchSize || 3;
+        const batchDelay = delay || 0;
+        for (let i = 0; i < groupedParagraphs.length; i += batchMax) {
+            const batch = groupedParagraphs.slice(i, i + batchMax);
+            const buffers = yield Promise.all(batch.map((str) => getAudioBuffer(str, voice)));
             audioBuffers.push(...buffers);
+            if (i + batchMax < groupedParagraphs.length) {
+                // waiting until the previous batch is done before starting the next one
+                // to ensure that the audio buffers are in the correct order
+                console.log(`waiting ${batchDelay / 1000} seconds before sending next batch`);
+                yield new Promise((resolve) => setTimeout(resolve, batchDelay));
+            }
         }
         // Concatenate all audio buffers
         const combinedBuffer = Buffer.concat(audioBuffers);
         // Write the concatenated buffer to an MP3 file
-        yield fs_1.default.promises.writeFile(speechFile, combinedBuffer);
+        yield fs_1.default.promises.writeFile(speechFile(outputFileName), combinedBuffer);
     });
 }
-main();
+exports.longTextToAudio = longTextToAudio;
+const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/solidarity-with-palestine-grows.html");
+const html = fs_1.default.readFileSync(htmlFile, "utf-8");
+let text = convert(html, conversionOptions);
+text = cleanText(text);
+console.log(text);
+// Usage _________________________________________________________________
+// longTextToAudio(
+//   "solidarity-with-palestine-grows",
+//   text,
+//   {
+//     batchSize: 50,
+//     delay: 60000,
+//     voice: "onyx",
+//   }
+// );
