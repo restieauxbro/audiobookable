@@ -4,6 +4,7 @@ const openai = new OpenAI();
 const { convert } = require("html-to-text");
 import fs from "fs";
 import path from "path";
+const lamejs = require("lamejs");
 
 type Voice =
   | "onyx" // men's voices
@@ -144,7 +145,7 @@ export async function longTextToAudio(
 }
 
 const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/solidarity-with-palestine-grows.html"
+  "./audiobooking/text-inputs/hamas-from-resistance-to-containment.html"
 );
 const html = fs.readFileSync(htmlFile, "utf-8");
 let text = convert(html, conversionOptions);
@@ -153,12 +154,8 @@ console.log(text);
 
 // Usage _________________________________________________________________
 
-// longTextToAudio(
-//   "solidarity-with-palestine-grows",
-//   text,
-//   {
-//     batchSize: 50,
-//     delay: 60000,
-//     voice: "onyx",
-//   }
-// );
+longTextToAudio("hamas-from-resistance-to-containment", text, {
+  batchSize: 50,
+  delay: 60000,
+  voice: "echo",
+});

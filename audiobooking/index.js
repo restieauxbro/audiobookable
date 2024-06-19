@@ -19,6 +19,7 @@ const openai = new openai_1.default();
 const { convert } = require("html-to-text");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const lamejs = require("lamejs");
 const conversionOptions = {
     uppercase: false,
     ignoreHref: true,
@@ -123,18 +124,14 @@ function longTextToAudio(outputFileName, text, options) {
     });
 }
 exports.longTextToAudio = longTextToAudio;
-const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/solidarity-with-palestine-grows.html");
+const htmlFile = path_1.default.resolve("./audiobooking/text-inputs/hamas-from-resistance-to-containment.html");
 const html = fs_1.default.readFileSync(htmlFile, "utf-8");
 let text = convert(html, conversionOptions);
 text = cleanText(text);
 console.log(text);
 // Usage _________________________________________________________________
-// longTextToAudio(
-//   "solidarity-with-palestine-grows",
-//   text,
-//   {
-//     batchSize: 50,
-//     delay: 60000,
-//     voice: "onyx",
-//   }
-// );
+longTextToAudio("hamas-from-resistance-to-containment", text, {
+    batchSize: 50,
+    delay: 60000,
+    voice: "echo",
+});
