@@ -1,10 +1,8 @@
 import OpenAI from "openai";
 require("dotenv").config();
 const openai = new OpenAI();
-const { convert } = require("html-to-text");
 import fs from "fs";
 import path from "path";
-const lamejs = require("lamejs");
 
 type Voice =
   | "onyx" // men's voices
@@ -14,28 +12,8 @@ type Voice =
   | "nova"
   | "shimmer";
 
-const conversionOptions = {
-  uppercase: false,
-  ignoreHref: true,
-  wordwrap: false,
-  selectors: [
-    // {selector: "h2", format: "lowercase"},
-    { selector: "sup", format: "skip" },
-    { selector: ".code-block", format: "skip" },
-    { selector: ".topics", format: "skip" },
-    { selector: "audio", format: "skip" },
-    { selector: ".author", format: "skip" },
-    { selector: ".mdp-speaker-wrapper", format: "skip" },
-    { selector: ".references", format: "skip" },
-    { selector: ".floating-ref-link", format: "skip" },
-    { selector: "table", format: "skip" },
-    { selector: ".note", format: "skip" },
-    { selector: "hr", format: "skip" },
-  ],
-};
-
 // Helper Function to Clean Text
-function cleanText(text: string): string {
+export function cleanText(text: string): string {
   // remove artifacts like [1], [2], [https://example.com] and so on
   let cleanedText = text.replace(/\[.*?\]/g, "");
   // remove everything after the last occurrence of "REFERENCES"
@@ -143,19 +121,3 @@ export async function longTextToAudio(
   // Write the concatenated buffer to an MP3 file
   await fs.promises.writeFile(speechFile(outputFileName), combinedBuffer);
 }
-
-const htmlFile = path.resolve(
-  "./audiobooking/text-inputs/hamas-from-resistance-to-containment.html"
-);
-const html = fs.readFileSync(htmlFile, "utf-8");
-let text = convert(html, conversionOptions);
-text = cleanText(text);
-console.log(text);
-
-// Usage _________________________________________________________________
-
-longTextToAudio("hamas-from-resistance-to-containment", text, {
-  batchSize: 50,
-  delay: 60000,
-  voice: "echo",
-});
