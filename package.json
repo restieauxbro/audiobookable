@@ -1,11 +1,10 @@
 {
-  "name": "playground",
+  "name": "audiobookable",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "createPodcast": "tsc && node ./audiobooking/index.js"
+    "createAudiobook": "tsc && node ./index.js"
   },
   "keywords": [],
   "author": "",
