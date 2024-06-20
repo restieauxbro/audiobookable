@@ -18,6 +18,14 @@ Audiobookable is a TypeScript Node.js script that converts long-form text into a
 1. Clone this repository: `git clone https://github.com/your-username/audiobookable.git`
 2. Install dependencies: `npm install`
 
+### Configuration
+
+Before running the script, create a `.env` file in the root directory with your OpenAI API key:
+```
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
+```
+Replace `YOUR_OPENAI_API_KEY_HERE` with your actual OpenAI API key.
+
 ### Usage
 
 1. Create a new HTML file with your long-form text content and place it in the `audiobooking/text-inputs` directory.
@@ -42,7 +50,7 @@ This will convert your long-form text into an audiobook and save it as an MP3 fi
 
 * `batchSize`: Adjust the number of API calls made per minute to avoid rate limits.
 * `delay`: Adjust the delay between API calls (in milliseconds).
-* `voice`: Select a voice model for the audiobook (e.g., "onyx", "lutana", etc.).
+* `voice`: Select a voice model for the audiobook (e.g., "onyx", "echo", "fabe", "alloy", "nova" or "shimmer").
 
 ### Contributions and Feedback
 
