@@ -17,7 +17,7 @@ export function cleanText(text: string): string {
   // remove artifacts like [1], [2], [https://example.com] and so on
   let cleanedText = text.replace(/\[.*?\]/g, "");
   // remove everything after the last occurrence of "REFERENCES"
-  cleanedText = cleanedText.replace(/REFERENCES.*$/s, "");
+  cleanedText = cleanedText.replace(/REFERENCES[\s\S]*$/, "");
   return cleanedText;
 }
 
@@ -52,8 +52,14 @@ function groupParagraphs(paragraphs: string[]): string[] {
   return groupedTexts.filter((group) => group.length > 0);
 }
 
-const speechFile = (outputFileName: string) =>
-  path.resolve(`./audiobooking/audio-outputs/${outputFileName}.mp3`);
+const speechFile = (outputFileName: string) => {
+  const outputDir = path.resolve('./audiobooking/audio-outputs');
+  // Create the directory if it doesn't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  return path.resolve(outputDir, `${outputFileName}.mp3`);
+}
 
 // Function to get audio buffer for a sentence
 async function getAudioBuffer(paragraph: string, voice?: Voice) {
