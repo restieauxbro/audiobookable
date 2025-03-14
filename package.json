@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "createAudiobook": "tsc && node ./index.js",
-    "scrape-articles": "tsc && node ./audiobooking/utils/articleScraper.js"
+    "scrape-articles": "tsc && node ./audiobooking/utils/articleScraper.js",
+    "upload-audio-info": "tsc && node ./audiobooking/utils/uploadAudioInfo.js"
   },
   "keywords": [],
   "author": "",

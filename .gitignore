@@ -17,3 +17,4 @@ audio-outputs
 # Ignore all files in text-inputs except example.html
 audiobooking/text-inputs/*
 !audiobooking/text-inputs/example.html
+audiobooking/utils/uploadAudioInfo.ts
