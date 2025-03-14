@@ -1,11 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Example Article</title>
+  <style>
+    .author {
+      color: #666;
+      font-style: italic;
+      margin-bottom: 20px;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-    This is an example of a text block, but imagine it much longer.
+  <h1>Example Article</h1>
+  <span class="author">By Example Author</span>
+  <div class="article-content">
+    <p>This is an example article file that demonstrates the format used for scraped articles.</p>
+    <p>The actual article content will be placed in this div with class "article-content".</p>
+    <p>All other files in this directory are ignored by Git, but this example file is tracked.</p>
+    
+    <h2>Article Structure</h2>
+    <p>Articles typically contain:</p>
+    <ul>
+      <li>A title as an H1 heading</li>
+      <li>The author in a span with class "author" (which can be easily hidden with CSS if needed)</li>
+      <li>The content in this div</li>
+      <li>Various HTML elements like paragraphs, headings, lists, etc.</li>
+    </ul>
+    
+    <p>To generate more article files, run:</p>
+    <pre>npm run scrape-articles</pre>
+  </div>
 </body>
 </html>
