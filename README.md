@@ -39,7 +39,9 @@ longTextToAudio("example",  // output filename
   text, {
   batchSize: 50, // adjust API call batch size to avoid rate limits
   delay: 60000, // adjust delay between API calls (in milliseconds)
-  voice: "onyx", // select a voice model (e.g., "onyx", "lutana", etc.)
+  // voice: "onyx", // uncomment to specify a particular voice
+  gender: "auto", // automatically determine gender from author name
+  html: html, // pass the HTML to extract author name
 });
 ```
 4. Run the script using the provided npm script: `npm run createAudiobook`
@@ -50,7 +52,9 @@ This will convert your long-form text into an audiobook and save it as an MP3 fi
 
 * `batchSize`: Adjust the number of API calls made per minute to avoid rate limits.
 * `delay`: Adjust the delay between API calls (in milliseconds).
-* `voice`: Select a voice model for the audiobook (e.g., "onyx", "echo", "fabe", "alloy", "nova" or "shimmer").
+* `voice`: Select a voice model for the audiobook (e.g., "onyx", "echo", "fable", "alloy", "nova" or "shimmer").
+* `gender`: Select a gender for the voice ("male", "female", or "auto"). When set to "auto", the system will attempt to determine the author's gender from their name using AI. This is used only when no specific voice is provided. Male voices include "onyx", "echo", and "fable". Female voices include "alloy", "nova", and "shimmer".
+* `html`: The original HTML content, required when using gender="auto" to extract the author's name.
 
 ### Contributions and Feedback
 

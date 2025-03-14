@@ -97,18 +97,9 @@ function formatArticleAsHtml(article: Article): string {
 <head>
   <meta charset="UTF-8">
   <title>${article.title}</title>
-  <style>
-    .author {
-      color: #666;
-      font-style: italic;
-      margin-bottom: 20px;
-      display: block;
-    }
-  </style>
 </head>
 <body>
   <h1>${article.title}</h1>
-  <span class="author">By ${article.author}</span>
   <div class="article-content">
     ${article.content}
   </div>
